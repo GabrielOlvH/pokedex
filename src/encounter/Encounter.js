@@ -5,20 +5,20 @@ import { useEffect, useRef, useState } from "react";
 import TWEEN, {Group} from "@tweenjs/tween.js";
 import './Encounter.css'
 
-const Encounter = () => {
+const Encounter = ({ setEncounter }) => {
     const data = useData();
     const pkmn = useQuery("pokemon", data.getEncounter, {suspense: true}).data;
     const mountRef = useRef(null);
-    const [showScene, setShowScene] = useState(false);
+    const [showScene, setShowScene] = useState(true);
 
     useEffect(() => {
         if (!showScene) return;
 
         // Initialize Three.js scene
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(75, 800/400, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({alpha: true});
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(800, 400);
         mountRef.current.appendChild(renderer.domElement);
         renderer.setClearColor(0xffffff, 0);
         camera.position.z = 5;
@@ -56,12 +56,12 @@ const Encounter = () => {
         // Text canvas
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        context.font = "Bold 48px Arial";
-        context.fillStyle = "white";
+        canvas.width =100;
+        canvas.height = 100;
+        context.font = "Bold 12px Arial";
+        context.fillStyle = "black";
         context.textAlign = "center";
-        context.fillText("Click to capture", canvas.width / 2, canvas.height / 2);
+        context.fillText("Click to capture", 0, 100);
         const texture = new THREE.CanvasTexture(canvas);
         const material = new THREE.SpriteMaterial({map: texture});
         const textSprite = new THREE.Sprite(material);
@@ -83,9 +83,10 @@ const Encounter = () => {
 
         // Click event
         const onClick = (event) => {
+            console.log("click")
             const mouse = new THREE.Vector2(
-                (event.clientX / window.innerWidth) * 2 - 1,
-                -(event.clientY / window.innerHeight) * 2 + 1
+                (event.clientX / 800) * 2 - 1,
+                -(event.clientY / 400) * 2 + 1
             );
             const raycaster = new THREE.Raycaster();
             raycaster.setFromCamera(mouse, camera);
@@ -185,6 +186,7 @@ const Encounter = () => {
             const success = Math.random() > 0.5;
             if (success) {
                 console.log("Capture successful!");
+                setEncounter()
                 data.setCaptured(pkmn.id);
             } else {
                 console.log("Capture failed!");
@@ -209,14 +211,13 @@ const Encounter = () => {
         // Cleanup
         return () => {
             document.removeEventListener("click", onClick);
-            mountRef.current.removeChild(renderer.domElement);
+
+            if (mountRef.current != null) mountRef.current.removeChild(renderer.domElement);
         };
     }, [showScene]);
 
     return (
         <>
-            <div className={"bg"}></div>
-
             <div>
 
                 {!showScene && <button onClick={() => setShowScene(true)} className={"play-button"}>play</button>}
