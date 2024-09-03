@@ -5,7 +5,6 @@
 }
 
 .App {
-  display: flex;
-  flex-direction: row;
+  background: lightcoral;
 
 }

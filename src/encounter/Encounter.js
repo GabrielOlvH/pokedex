@@ -1,228 +1,222 @@
 import { useData } from "../data/Data";
 import { useQuery } from "react-query";
-import * as THREE from "three";
-import { useEffect, useRef, useState } from "react";
-import TWEEN, {Group} from "@tweenjs/tween.js";
-import './Encounter.css'
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import {useEffect, useRef, useState, useMemo, Suspense} from "react";
+import { TextureLoader, NearestFilter, SpriteMaterial, Sprite, AudioLoader, AudioListener, Audio } from "three";
+import TWEEN, { Group } from "@tweenjs/tween.js";
+import './Encounter.css';
 
-const Encounter = ({ setEncounter }) => {
+const PokeballTransform = {
+    position: {
+        x: 0, y: 0, z: -1
+    },
+    scale: {
+        x: 0.1, y: 0.1, z: 0.1
+    },
+    rotation: 0
+}
+
+const PokemonTransform = {
+    position: {
+        x: 0, y: 1, z: -1
+    },
+    scale: {
+        x: 1, y: 1, z: 1
+    },
+    rotation: 0,
+    color: [1, 1, 1]
+}
+
+const Encounter = ({ encounter, setEncounter, groupRef }) => {
     const data = useData();
-    const pkmn = useQuery("pokemon", data.getEncounter, {suspense: true}).data;
-    const mountRef = useRef(null);
+    const [pkmn, setPkmn] = useState(null)
+    useEffect(() => {
+        if (encounter != null) {
+            fetch(`https://pokeapi.co/api/v2/pokemon/${encounter}/`).then((response) => {
+                response.json().then((json) => {
+                    setPkmn(json)
+                })
+
+            })
+        } else {
+            setPkmn(null)
+        }
+    }, [encounter])
     const [showScene, setShowScene] = useState(true);
 
+    const [pokeball, setPokeball] = useState(PokeballTransform)
+    const [pokemon, setPokemon] = useState(PokemonTransform)
+
+    const group = useMemo(() => new Group(), []);
+
     useEffect(() => {
-        if (!showScene) return;
+        if (groupRef) {
+            groupRef.current = group;
+        }
+    }, [group, groupRef]);
 
-        // Initialize Three.js scene
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, 800/400, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({alpha: true});
-        renderer.setSize(800, 400);
-        mountRef.current.appendChild(renderer.domElement);
-        renderer.setClearColor(0xffffff, 0);
-        camera.position.z = 5;
-
-        // TextureLoader and sprite creation
-        const loader = new THREE.TextureLoader();
-        loader.setCrossOrigin("anonymous");
-
-        const createSprite = (loc) => {
-            const texture = loader.load(loc);
-            texture.minFilter = THREE.NearestFilter;
-            texture.magFilter = THREE.NearestFilter;
-            const material = new THREE.SpriteMaterial({map: texture});
-            const sprite = new THREE.Sprite(material);
-            return {
-                texture,
-                material,
-                sprite
-            };
-        };
-
-        // Pokemon sprite
-        const pokemon = createSprite(pkmn.sprites.front_default);
-        pokemon.sprite.scale.set(2, 2, 1);
-        pokemon.sprite.position.set(0, 1, 0);
-
-        scene.add(pokemon.sprite);
-
-        // Pokeball sprite
-        const pokeball = createSprite("pokeball.png");
-        pokeball.sprite.position.set(0, -2, 1);
-        pokeball.sprite.scale.set(.5, .5, 1)
-        scene.add(pokeball.sprite);
-
-        // Text canvas
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-        canvas.width =100;
-        canvas.height = 100;
-        context.font = "Bold 12px Arial";
-        context.fillStyle = "black";
-        context.textAlign = "center";
-        context.fillText("Click to capture", 0, 100);
-        const texture = new THREE.CanvasTexture(canvas);
-        const material = new THREE.SpriteMaterial({map: texture});
-        const textSprite = new THREE.Sprite(material);
-        textSprite.scale.set(5, 2.5, 1);
-        textSprite.position.set(0, -1.2, 0);
-        scene.add(textSprite);
-
-        // Audio setup
-        const listener = new THREE.AudioListener();
-        camera.add(listener);
-        const sound = new THREE.Audio(listener);
-        const audioLoader = new THREE.AudioLoader();
-        audioLoader.load(pkmn.cries.latest, (buffer) => {
-            sound.setBuffer(buffer);
-            sound.setLoop(false);
-            sound.setVolume(0.02);
-            sound.play();
-        });
-
-        // Click event
-        const onClick = (event) => {
-            console.log("click")
-            const mouse = new THREE.Vector2(
-                (event.clientX / 800) * 2 - 1,
-                -(event.clientY / 400) * 2 + 1
-            );
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObject(pokeball.sprite);
-            if (intersects.length > 0) {
-                console.log("clicked");
-                throwPokeball();
-            }
-        };
-
-        const group = new Group()
-
-        const throwPokeball = () => {
-            let capturing = false
-            group.add(new TWEEN.Tween(pokeball.sprite.position)
-                .to({x: 0, y: 1, z: 1}, 1500)
+    const throwPokeball = () => {
+        let capturing = false;
+        group.add(
+            new TWEEN.Tween({y: 0})
+                .to({ y: 1 }, 1500)
                 .easing(TWEEN.Easing.Bounce.Out)
                 .onUpdate((pos, elapsed) => {
+                    setPokeball(prev => ({
+                        ...prev,
+                        position: { x: prev.position.x, y: elapsed, z: prev.position.z }
+                    }));
                     if (elapsed > 0.9 && !capturing) {
-                        capturing = true
-                        group.add(new TWEEN.Tween({progress: 0.0})
-                            .to({progress: 1.0}, 500)
-                            .easing(TWEEN.Easing.Linear.InOut)
-                            .onUpdate((obj) => {
-                                const animation = 2 * (1 - obj.progress);
-                                pokemon.sprite.scale.set(animation, animation, 1)
-                                const color = 1 + 10 * (obj.progress)
-                                pokemon.sprite.material.color = new THREE.Color(color, color, color)
-                                pokemon.sprite.position.set(0, 1 + obj.progress * 0.5, 0)
-                            })
-                            .onComplete(() => shakePokeball())
-                            .start())
+                        capturing = true;
+                        group.add(
+                            new TWEEN.Tween({ progress: 0.0 })
+                                .to({ progress: 1.0 }, 500)
+                                .easing(TWEEN.Easing.Linear.InOut)
+                                .onUpdate((obj) => {
+                                    const animation = 2 * (1 - obj.progress);
+                                    const color = 1 + 10 * obj.progress;
+                                    setPokemon((prev) => ({
+                                        ...prev,
+                                        scale: {
+                                            x: animation,
+                                            y: animation,
+                                            z: 1
+                                        },
+                                        position: {
+                                            x: 0,
+                                            y: 0.75 + obj.progress * 0.5,
+                                            z: -1
+                                        },
+                                        color: [color, color, color]
+
+                                    }))
+                                })
+                                .onComplete(() => shakePokeball())
+                                .start()
+                        );
                     }
                 })
-                .start());
+                .start()
+        );
+    };
 
+    const shakePokeball = () => {
+        let count = 0;
+        const totalShakes = 5;
 
-        };
+        const shakeLeft = new TWEEN.Tween({ rotation: 0 })
+            .to({ rotation: Math.PI / -4 }, 250)
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .onUpdate((object) => {
+                setPokeball(prev => ({
+                    ...prev,
+                    rotation: object.rotation
+                }));
+            });
 
-        // Shaking animation
-        const shakePokeball = () => {
-            let count = 0
-            const totalShakes = 5;
-            if (count >= totalShakes) {
-                checkCapture(); // Perform capture check after finishing all shakes
-                return;
-            }
+        const idle = new TWEEN.Tween({ rotation: Math.PI / 4 })
+            .to({ rotation: 0 }, 1000)
+            .easing(TWEEN.Easing.Bounce.Out)
+            .onUpdate((object) => {
+                setPokeball(prev => ({
+                    ...prev,
+                    rotation: object.rotation
+                }));
+                console.log("PROGRESS: " + object.rotation)
+                console.log(pokeball)
+            })
+            .onComplete(() => {
+                count++;
+                if (count < totalShakes) {
+                    shakeLeft.start();
+                } else {
+                    checkCapture();
+                }
+            });
 
-            const shakeLeft = new TWEEN.Tween({rotation: 0})
-                .to({rotation: (Math.PI / -4)}, 250)
-                .easing(TWEEN.Easing.Quadratic.InOut)
-                .onUpdate((object) => {
-                    pokeball.sprite.material.rotation = object.rotation;
-                })
-                .onComplete(() => {
+        const shakeRight = new TWEEN.Tween({ rotation: Math.PI / -4 })
+            .to({ rotation: Math.PI / 4 }, 250)
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .onUpdate((object) => {
+                setPokeball(prev => ({
+                    ...prev,
+                    rotation: object.rotation
+                }));
+            })
+            .onComplete(() => {
+                idle.start();
+            });
 
-                })
+        group.add(shakeLeft);
+        group.add(shakeRight);
+        group.add(idle);
 
-            const idle = new TWEEN.Tween({rotation: Math.PI / 4})
-                .to({rotation: 0}, 1000)
-                .easing(TWEEN.Easing.Bounce.Out)
-                .onUpdate((object) => {
-                    pokeball.sprite.material.rotation = object.rotation;
-                })
-                .onComplete(() => {
-                    count++
-                    if (count < 5) {
-                        shakeLeft.start()
-                    } else {
-                        checkCapture()
-                    }
+        shakeLeft.chain(shakeRight);
+        shakeLeft.start();
+    };
 
-                })
-
-            const shakeRight = new TWEEN.Tween({rotation: Math.PI / -4})
-                .to({rotation: (Math.PI / 4)}, 250)
-                .easing(TWEEN.Easing.Quadratic.InOut)
-                .onUpdate((object) => {
-                    pokeball.sprite.material.rotation = object.rotation;
-                })
-                .onComplete(() => {
-                    idle.start()
-                })
-
-            group.add(shakeLeft)
-            group.add(shakeRight)
-            group.add(idle)
-
-            shakeLeft.chain(shakeRight)
-            shakeLeft.start()
-
-        };
-
-
-        // Capture check
-        function checkCapture() {
-            const success = Math.random() > 0.5;
-            if (success) {
-                console.log("Capture successful!");
-                setEncounter()
-                data.setCaptured(pkmn.id);
-            } else {
-                console.log("Capture failed!");
-                pokemon.sprite.material.color.set(0xFFFFFF)
-                pokemon.sprite.scale.set(2, 2, 2)
-                pokeball.sprite.position.set(0, -2, 1);
-                pokeball.sprite.material.rotation = 0;
-            }
+    const checkCapture = () => {
+        const success = Math.random() > 0.5;
+        if (success) {
+            setEncounter();
+            data.setCaptured(pkmn.id);
         }
+        setPokemon(PokemonTransform);
+        setPokeball(PokeballTransform);
+    };
 
-        document.addEventListener("click", onClick);
+    useEffect(() => {
+        if (pkmn != null) {
+            const audioListener = new AudioListener();
+            const sound = new Audio(audioListener);
+            const audioLoader = new AudioLoader();
+            audioLoader.load(pkmn.cries.latest, (buffer) => {
+                sound.setBuffer(buffer);
+                sound.setLoop(false);
+                sound.setVolume(0.05);
+                sound.play();
+            });
+        }
+    }, [pkmn]);
 
-        // Animation loop
-        const animate = (time) => {
-            requestAnimationFrame(animate);
-            group.update(time); // Pass time to TWEEN.update()
-            renderer.render(scene, camera);
-        };
+    const EncounterScene = () => {
+        const pokemonTexture = useLoader(TextureLoader, pkmn.sprites.front_default);
+        pokemonTexture.minFilter = NearestFilter;
+        pokemonTexture.magFilter = NearestFilter;
 
-        animate();
+        useFrame((state, delta) => {
+            group.update(state.clock.elapsedTime * 1000);
+        });
 
-        // Cleanup
-        return () => {
-            document.removeEventListener("click", onClick);
-
-            if (mountRef.current != null) mountRef.current.removeChild(renderer.domElement);
-        };
-    }, [showScene]);
+        return (
+            <>
+                <sprite scale={[pokemon.scale.x, pokemon.scale.y, pokemon.scale.z]}
+                        position={[pokemon.position.x, pokemon.position.y, pokemon.position.z]}
+                        renderOrder={0}>
+                    <spriteMaterial attach="material" color={pokemon.color} map={pokemonTexture}/>
+                </sprite>
+            </>
+        );
+    };
+    const pokeballTexture = useLoader(TextureLoader, "pokeball.png");
 
     return (
         <>
-            <div>
-
-                {!showScene && <button onClick={() => setShowScene(true)} className={"play-button"}>play</button>}
-                <div ref={mountRef}/>
-            </div>
+            {!showScene && <button onClick={() => setShowScene(true)} className={"play-button"}>play</button>}
+            {showScene && (
+                <group position={[30, 0, 2]} scale={[10, 10, 10]}>
+                    {pkmn != null && <Suspense fallback={""}>
+                        <EncounterScene/>
+                    </Suspense>}
+                    <sprite scale={[0.5, 0.5, 0.5]}
+                            position={[pokeball.position.x, pokeball.position.y, pokeball.position.z]}
+                            onClick={throwPokeball}
+                            renderOrder={10}>
+                        <spriteMaterial attach="material" depthTest={false} map={pokeballTexture}
+                                        rotation={pokeball.rotation}/>
+                    </sprite>
+                </group>
+            )}
         </>
     );
 };

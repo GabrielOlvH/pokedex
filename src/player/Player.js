@@ -1,6 +1,8 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, {useRef, useEffect, useState, Suspense} from 'react';
 import * as THREE from 'three';
 import {Canvas, useFrame, useLoader} from '@react-three/fiber';
+import Encounter from "../encounter/Encounter";
+import {Group} from "@tweenjs/tween.js";
 
 const MAP_SIZE = 20; // Define o tamanho do mapa (10x10)
 
@@ -31,7 +33,8 @@ function Tile({ position }) {
     );
 }
 
-function Map({ setEncounter }) {
+function Map({ groupRef }) {
+    const [encounter, setEncounter ]= useState(null)
     const [playerPosition, setPlayerPosition] = useState({x: 0, y: 0});
 
     const movePlayer = (event) => {
@@ -66,7 +69,9 @@ function Map({ setEncounter }) {
         }
 
         if (Math.random() > 0.95) {
-            setEncounter("aaa")
+            const id = Math.round(Math.random() * 1000)
+            console.log("id: " + id)
+            setEncounter(id)
         }
     };
 
@@ -84,12 +89,16 @@ function Map({ setEncounter }) {
         }
     }
 
+
     return (
-        <div >
-            <Canvas style={{width: (MAP_SIZE * MAP_SIZE* 2) + "px", height: (MAP_SIZE * MAP_SIZE * 2 )+ "px"}} orthographic camera={{zoom: 20, position: [MAP_SIZE / 2, MAP_SIZE / 2, 10], up: [0, 0, 0    ] }} >
+        <div>
+            <Canvas style={{width: (MAP_SIZE * MAP_SIZE* 4) + "px", height: (MAP_SIZE * MAP_SIZE * 2) + "px"}} orthographic camera={{zoom: 20, position: [MAP_SIZE, MAP_SIZE / 2, 10], up: [0, 0, 0] }} >
                 <ambientLight/>
                 {tiles}
                 <Player position={playerPosition}/>
+                <Suspense fallback={"aaa"}>
+                    <Encounter groupRef={groupRef} encounter={encounter} setEncounter={() => setEncounter(null)}/>
+                </Suspense>
             </Canvas>
         </div>
     );
