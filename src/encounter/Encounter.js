@@ -5,27 +5,7 @@ import {useEffect, useRef, useState, useMemo, Suspense} from "react";
 import { TextureLoader, NearestFilter, SpriteMaterial, Sprite, AudioLoader, AudioListener, Audio } from "three";
 import TWEEN, { Group } from "@tweenjs/tween.js";
 import './Encounter.css';
-
-const PokeballTransform = {
-    position: {
-        x: 0, y: 0, z: -1
-    },
-    scale: {
-        x: 0.1, y: 0.1, z: 0.1
-    },
-    rotation: 0
-}
-
-const PokemonTransform = {
-    position: {
-        x: 0, y: 1, z: -1
-    },
-    scale: {
-        x: 1, y: 1, z: 1
-    },
-    rotation: 0,
-    color: [1, 1, 1]
-}
+import Transform from "../transform/Transform";
 
 const Encounter = ({ encounter, setEncounter, groupRef }) => {
     const data = useData();
@@ -44,8 +24,9 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
     }, [encounter])
     const [showScene, setShowScene] = useState(true);
 
-    const [pokeball, setPokeball] = useState(PokeballTransform)
-    const [pokemon, setPokemon] = useState(PokemonTransform)
+    const pokeball = Transform([0, 0, -1], [0.1, 0.1, 0.1])
+    const [pokemonColor, setPokemonColor] = useState(1)
+    const pokemon = Transform([0, 1, -1], [1, 1, 1])
 
     const group = useMemo(() => new Group(), []);
 
@@ -62,10 +43,7 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
                 .to({ y: 1 }, 1500)
                 .easing(TWEEN.Easing.Bounce.Out)
                 .onUpdate((pos, elapsed) => {
-                    setPokeball(prev => ({
-                        ...prev,
-                        position: { x: prev.position.x, y: elapsed, z: prev.position.z }
-                    }));
+                    pokeball.setY(elapsed)
                     if (elapsed > 0.9 && !capturing) {
                         capturing = true;
                         group.add(
@@ -75,21 +53,9 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
                                 .onUpdate((obj) => {
                                     const animation = 2 * (1 - obj.progress);
                                     const color = 1 + 10 * obj.progress;
-                                    setPokemon((prev) => ({
-                                        ...prev,
-                                        scale: {
-                                            x: animation,
-                                            y: animation,
-                                            z: 1
-                                        },
-                                        position: {
-                                            x: 0,
-                                            y: 0.75 + obj.progress * 0.5,
-                                            z: -1
-                                        },
-                                        color: [color, color, color]
-
-                                    }))
+                                    pokemon.setScale([animation, animation, 1])
+                                    pokemon.setPos([0, 0.75 + obj.progress * 0.5, -1])
+                                    setPokemonColor(color)
                                 })
                                 .onComplete(() => shakePokeball())
                                 .start()
@@ -108,22 +74,14 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
             .to({ rotation: Math.PI / -4 }, 250)
             .easing(TWEEN.Easing.Quadratic.InOut)
             .onUpdate((object) => {
-                setPokeball(prev => ({
-                    ...prev,
-                    rotation: object.rotation
-                }));
+                pokeball.setRotation(object.rotation)
             });
 
         const idle = new TWEEN.Tween({ rotation: Math.PI / 4 })
             .to({ rotation: 0 }, 1000)
             .easing(TWEEN.Easing.Bounce.Out)
             .onUpdate((object) => {
-                setPokeball(prev => ({
-                    ...prev,
-                    rotation: object.rotation
-                }));
-                console.log("PROGRESS: " + object.rotation)
-                console.log(pokeball)
+                pokeball.setRotation(object.rotation)
             })
             .onComplete(() => {
                 count++;
@@ -138,10 +96,7 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
             .to({ rotation: Math.PI / 4 }, 250)
             .easing(TWEEN.Easing.Quadratic.InOut)
             .onUpdate((object) => {
-                setPokeball(prev => ({
-                    ...prev,
-                    rotation: object.rotation
-                }));
+                pokeball.setRotation(object.rotation)
             })
             .onComplete(() => {
                 idle.start();
@@ -161,8 +116,8 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
             setEncounter();
             data.setCaptured(pkmn.id);
         }
-        setPokemon(PokemonTransform);
-        setPokeball(PokeballTransform);
+        pokemon.reset()
+        pokeball.reset()
     };
 
     useEffect(() => {
@@ -190,10 +145,10 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
 
         return (
             <>
-                <sprite scale={[pokemon.scale.x, pokemon.scale.y, pokemon.scale.z]}
-                        position={[pokemon.position.x, pokemon.position.y, pokemon.position.z]}
+                <sprite scale={pokemon.scale}
+                        position={pokemon.pos}
                         renderOrder={0}>
-                    <spriteMaterial attach="material" color={pokemon.color} map={pokemonTexture}/>
+                    <spriteMaterial attach="material" color={[pokemonColor, pokemonColor, pokemonColor]} map={pokemonTexture}/>
                 </sprite>
             </>
         );
@@ -209,7 +164,7 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
                         <EncounterScene/>
                     </Suspense>}
                     <sprite scale={[0.5, 0.5, 0.5]}
-                            position={[pokeball.position.x, pokeball.position.y, pokeball.position.z]}
+                            position={pokeball.pos}
                             onClick={throwPokeball}
                             renderOrder={10}>
                         <spriteMaterial attach="material" depthTest={false} map={pokeballTexture}
