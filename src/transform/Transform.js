@@ -13,7 +13,7 @@ const Transform = (initialPos = [0, 0, 0], initialScale = [1, 1, 1]) => {
     }
 
     const reset = () => {
-        setPos(initialScale)
+        setPos(initialPos)
         setScale(initialScale)
     }
 

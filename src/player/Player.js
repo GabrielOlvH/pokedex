@@ -1,8 +1,10 @@
-import React, {useRef, useEffect, useState, Suspense} from 'react';
+import React, {useRef, useEffect, useState} from 'react';
 import * as THREE from 'three';
 import {Canvas, useFrame, useLoader} from '@react-three/fiber';
-import Encounter from "../encounter/Encounter";
-import {Group} from "@tweenjs/tween.js";
+import {useData} from "../data/Data";
+import Tiles from "./Tiles";
+import GetDefaultZoneData from "./Tiles";
+import GetZoneData from "./Tiles";
 
 const MAP_SIZE = 20; // Define o tamanho do mapa (10x10)
 
@@ -14,6 +16,7 @@ function Player({ position }) {
         if (playerRef.current) {
             playerRef.current.position.x = position.x;
             playerRef.current.position.y = position.y;
+            playerRef.current.position.zone = position.zone;
         }
     });
 
@@ -24,20 +27,23 @@ function Player({ position }) {
     );
 }
 
-function Tile({ position }) {
+function Tile({ position, data }) {
     return (
         <mesh position={position}>
-            <planeGeometry args={[2, 2]} />
-            <meshBasicMaterial color="green" />
+            <planeGeometry args={[1, 1]} />
+            {data[position[0]][position[1]]}
         </mesh>
     );
 }
 
-function Map({ groupRef }) {
-    const [encounter, setEncounter ]= useState(null)
-    const [playerPosition, setPlayerPosition] = useState({x: 0, y: 0});
+function Map({ setEncounter, openZoneSelector, playerPosition, setPlayerPosition }) {
 
+    const data = useData()
+
+
+    let canWalk = true
     const movePlayer = (event) => {
+        if (!canWalk) return;
         const step = 1;
         switch (event.key) {
             case 'ArrowUp':
@@ -67,12 +73,20 @@ function Map({ groupRef }) {
             default:
                 return;
         }
+        canWalk = false
 
-        if (Math.random() > 0.95) {
-            const id = Math.round(Math.random() * 1000)
-            console.log("id: " + id)
-            setEncounter(id)
-        }
+        data.getEncounter(playerPosition).then(r => {
+            if (r === null) {
+                setEncounter(null)
+            } else {
+                setEncounter(r.id)
+            }
+        })
+
+        const timeout = setTimeout(() => {
+            canWalk = true
+            clearTimeout(timeout)
+        }, 1000)
     };
 
     useEffect(() => {
@@ -82,24 +96,47 @@ function Map({ groupRef }) {
         };
     }, []);
 
-    const tiles = [];
-    for (let x = 0; x < MAP_SIZE; x++) {
-        for (let y = 0; y < MAP_SIZE; y++) {
-            tiles.push(<Tile key={`${x}-${y}`} position={[x, y, 0]}/>);
+    const [tiles, setTiles] = useState([]);
+    const mapData = GetZoneData(playerPosition.zone);
+    useEffect(() => {
+        if (mapData === undefined) return;
+        console.log(mapData)
+        let tmpTiles = []
+        for (let x = 0; x < MAP_SIZE; x++) {
+            for (let y = 0; y < MAP_SIZE; y++) {
+                tmpTiles.push(<Tile key={`Zone ${playerPosition.zone} ${x}-${y}`} position={[x, y, 0]} data={mapData}/>);
+            }
         }
-    }
+
+        setTiles(tmpTiles)
+    }, [mapData])
 
 
     return (
-        <div>
-            <Canvas style={{width: (MAP_SIZE * MAP_SIZE* 4) + "px", height: (MAP_SIZE * MAP_SIZE * 2) + "px"}} orthographic camera={{zoom: 20, position: [MAP_SIZE, MAP_SIZE / 2, 10], up: [0, 0, 0] }} >
+        <div className={"game"}>
+            <button style={{width: "fit-content", padding: ".25rem .5rem .5rem .5rem", marginBottom: ".5rem"}} onClick={openZoneSelector}>Open Map</button>
+            <Canvas
+                style={{width: "300px", height: "300px", background: "red"}}
+                orthographic
+                camera={{zoom: 15, position: [13.5, 13.5, 8.9], up: [0, 0, 0]}}
+
+            >
                 <ambientLight/>
                 {tiles}
-                <Player position={playerPosition}/>
-                <Suspense fallback={"aaa"}>
-                    <Encounter groupRef={groupRef} encounter={encounter} setEncounter={() => setEncounter(null)}/>
-                </Suspense>
+                <Player position={{
+                    x: playerPosition.x +0.5,
+                    y: playerPosition.y+0.5
+                }}/>
+
             </Canvas>
+            <div style={{textAlign: "center", marginTop: ".5rem"}}>
+                <button onClick={() => movePlayer({key: 'ArrowUp'})}>↑</button>
+                <div style={{marginTop: ".5rem", display: "flex", justifyContent: "center", gap: ".5rem"}}>
+                    <button onClick={() => movePlayer({key: 'ArrowLeft'})}>←</button>
+                    <button onClick={() => movePlayer({key: 'ArrowDown'})}>↓</button>
+                    <button onClick={() => movePlayer({key: 'ArrowRight'})}>→</button>
+                </div>
+            </div>
         </div>
     );
 }

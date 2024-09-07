@@ -6,27 +6,35 @@ import { TextureLoader, NearestFilter, SpriteMaterial, Sprite, AudioLoader, Audi
 import TWEEN, { Group } from "@tweenjs/tween.js";
 import './Encounter.css';
 import Transform from "../transform/Transform";
+import usePopup from "../message/usePopup";
 
 const Encounter = ({ encounter, setEncounter, groupRef }) => {
     const data = useData();
     const [pkmn, setPkmn] = useState(null)
+    const triggerPopup = usePopup()
     useEffect(() => {
         if (encounter != null) {
             fetch(`https://pokeapi.co/api/v2/pokemon/${encounter}/`).then((response) => {
                 response.json().then((json) => {
                     setPkmn(json)
+                    triggerPopup((
+                        <>
+                            <h2>A wild {json.name.toUpperCase()} has appeared!</h2>
+                        </>
+                    ), 2000)
                 })
 
             })
+
         } else {
             setPkmn(null)
         }
     }, [encounter])
     const [showScene, setShowScene] = useState(true);
 
-    const pokeball = Transform([0, 0, -1], [0.1, 0.1, 0.1])
+    const pokeball = Transform([0, -0.75, -1], [0.1, 0.1, 0.1])
     const [pokemonColor, setPokemonColor] = useState(1)
-    const pokemon = Transform([0, 1, -1], [1, 1, 1])
+    const pokemon = Transform([0, 1.5, -1], [2, 2, 2])
 
     const group = useMemo(() => new Group(), []);
 
@@ -37,38 +45,40 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
     }, [group, groupRef]);
 
     const throwPokeball = () => {
-        let capturing = false;
-        group.add(
-            new TWEEN.Tween({y: 0})
-                .to({ y: 1 }, 1500)
-                .easing(TWEEN.Easing.Bounce.Out)
-                .onUpdate((pos, elapsed) => {
-                    pokeball.setY(elapsed)
-                    if (elapsed > 0.9 && !capturing) {
-                        capturing = true;
-                        group.add(
-                            new TWEEN.Tween({ progress: 0.0 })
-                                .to({ progress: 1.0 }, 500)
-                                .easing(TWEEN.Easing.Linear.InOut)
-                                .onUpdate((obj) => {
-                                    const animation = 2 * (1 - obj.progress);
-                                    const color = 1 + 10 * obj.progress;
-                                    pokemon.setScale([animation, animation, 1])
-                                    pokemon.setPos([0, 0.75 + obj.progress * 0.5, -1])
-                                    setPokemonColor(color)
-                                })
-                                .onComplete(() => shakePokeball())
-                                .start()
-                        );
-                    }
-                })
-                .start()
-        );
+        data.getCatchSuccesses(pkmn).then(totalShakes => {
+            let capturing = false;
+            group.add(
+                new TWEEN.Tween({y: -0.75})
+                    .to({ y: 1.5 }, 1500)
+                    .easing(TWEEN.Easing.Bounce.Out)
+                    .onUpdate((pos, elapsed) => {
+                        pokeball.setY(pos.y)
+                        if (elapsed > 0.85 && !capturing) {
+                            capturing = true;
+                            group.add(
+                                new TWEEN.Tween({ progress: 0.0 })
+                                    .to({ progress: 1.0 }, 500)
+                                    .easing(TWEEN.Easing.Linear.InOut)
+                                    .onUpdate((obj) => {
+                                        const animation = 2 * (1 - obj.progress);
+                                        const color = 1 + 10 * obj.progress;
+                                        pokemon.setScale([animation, animation, 1])
+                                        pokemon.setPos([0, .5 + 0.75 + obj.progress * 0.5, -1])
+                                        setPokemonColor(color)
+                                    })
+                                    .onComplete(() => shakePokeball(totalShakes))
+                                    .start()
+                            );
+                        }
+                    })
+                    .start()
+            );
+        })
+
     };
 
-    const shakePokeball = () => {
+    const shakePokeball = (totalShakes) => {
         let count = 0;
-        const totalShakes = 5;
 
         const shakeLeft = new TWEEN.Tween({ rotation: 0 })
             .to({ rotation: Math.PI / -4 }, 250)
@@ -78,7 +88,7 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
             });
 
         const idle = new TWEEN.Tween({ rotation: Math.PI / 4 })
-            .to({ rotation: 0 }, 1000)
+            .to({ rotation: 0 }, 500)
             .easing(TWEEN.Easing.Bounce.Out)
             .onUpdate((object) => {
                 pokeball.setRotation(object.rotation)
@@ -88,7 +98,7 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
                 if (count < totalShakes) {
                     shakeLeft.start();
                 } else {
-                    checkCapture();
+                    checkCapture(totalShakes);
                 }
             });
 
@@ -110,14 +120,22 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
         shakeLeft.start();
     };
 
-    const checkCapture = () => {
-        const success = Math.random() > 0.5;
+    const checkCapture = (totalShakes) => {
+        const success = totalShakes === 3;
+        pokemon.reset()
+        pokeball.reset()
+        setPokemonColor(1)
         if (success) {
             setEncounter();
             data.setCaptured(pkmn.id);
+            triggerPopup((
+                <>
+                    <h2>Gotcha!</h2>
+                    <p>{pkmn.name.toUpperCase()} was caught!</p>
+                </>
+            ), 2000)
         }
-        pokemon.reset()
-        pokeball.reset()
+
     };
 
     useEffect(() => {
@@ -159,7 +177,7 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
         <>
             {!showScene && <button onClick={() => setShowScene(true)} className={"play-button"}>play</button>}
             {showScene && (
-                <group position={[30, 0, 2]} scale={[10, 10, 10]}>
+                <Canvas className={"encounter"} style={{width: "300px", height: "300px"}} orthographic camera={{zoom: 75, position: [0, 2, 10], up: [0, 0, 0] }} >
                     {pkmn != null && <Suspense fallback={""}>
                         <EncounterScene/>
                     </Suspense>}
@@ -170,7 +188,7 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
                         <spriteMaterial attach="material" depthTest={false} map={pokeballTexture}
                                         rotation={pokeball.rotation}/>
                     </sprite>
-                </group>
+                </Canvas>
             )}
         </>
     );

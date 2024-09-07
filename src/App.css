@@ -5,6 +5,30 @@
 }
 
 .App {
-  background: lightcoral;
+  background: lightblue;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  display: flex;
 
+  @media screen and (max-width: 600px) {
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+  }
+}
+
+
+.encounter {
+  background: url("../public/img.png") no-repeat;
+  background-size: cover;
+}
+
+.game button {
+  border: none;
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  background: dimgray;
+  color: white;
 }

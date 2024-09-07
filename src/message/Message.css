@@ -1,0 +1,58 @@
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+.message-container {
+    position: absolute;
+
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90dvw;
+    height: 95dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 1rem;
+    pointer-events: none;
+}
+
+
+.message-background {
+    background: gray;
+    width: 90dvw;
+    height: 70px;
+    opacity: 0;
+    text-align: center;
+    border: 4px dimgray solid;
+    box-shadow: 0 0 8px inset black;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    filter: drop-shadow(5px 5px 10px black);
+    color: white;
+    text-shadow: 2px 2px 5px black;
+    animation-duration: 0.5s;
+    animation-fill-mode: both;
+}
+
+.show {
+    animation-name: fadeIn;
+}
+
+.hide {
+    animation-name: fadeOut;
+}
