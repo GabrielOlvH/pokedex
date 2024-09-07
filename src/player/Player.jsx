@@ -100,7 +100,6 @@ function Map({ setEncounter, openZoneSelector, playerPosition, setPlayerPosition
     const mapData = GetZoneData(playerPosition.zone);
     useEffect(() => {
         if (mapData === undefined) return;
-        console.log(mapData)
         let tmpTiles = []
         for (let x = 0; x < MAP_SIZE; x++) {
             for (let y = 0; y < MAP_SIZE; y++) {
@@ -109,7 +108,9 @@ function Map({ setEncounter, openZoneSelector, playerPosition, setPlayerPosition
         }
 
         setTiles(tmpTiles)
+
     }, [mapData])
+
 
 
     return (

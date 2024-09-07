@@ -1,4 +1,4 @@
-// Popup.js
+// Popup.jsx
 import React, {useEffect, useState} from 'react';
 import { usePopups } from './PopupContext';
 import './Message.css'

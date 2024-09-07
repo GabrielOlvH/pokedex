@@ -14,6 +14,7 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
     const triggerPopup = usePopup()
     useEffect(() => {
         if (encounter != null) {
+            console.log("fetching!!")
             fetch(`https://pokeapi.co/api/v2/pokemon/${encounter}/`).then((response) => {
                 response.json().then((json) => {
                     setPkmn(json)
