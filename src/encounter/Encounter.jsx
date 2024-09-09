@@ -7,6 +7,7 @@ import TWEEN, { Group } from "@tweenjs/tween.js";
 import './Encounter.css';
 import Transform from "../transform/Transform";
 import usePopup from "../message/usePopup";
+import * as THREE from 'three';
 
 const Encounter = ({ encounter, setEncounter, groupRef }) => {
     const data = useData();
@@ -45,8 +46,11 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
         }
     }, [group, groupRef]);
 
+
+
     const throwPokeball = () => {
         data.getCatchSuccesses(pkmn).then(totalShakes => {
+
             let capturing = false;
             group.add(
                 new TWEEN.Tween({y: -0.75})
@@ -150,6 +154,7 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
                 sound.setVolume(0.05);
                 sound.play();
             });
+        } else {
         }
     }, [pkmn]);
 
@@ -159,7 +164,7 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
         pokemonTexture.magFilter = NearestFilter;
 
         useFrame((state, delta) => {
-            group.update(state.clock.elapsedTime * 1000);
+            group.update();
         });
 
         return (
@@ -175,10 +180,19 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
     const pokeballTexture = useLoader(TextureLoader, "pokeball.png");
 
     return (
-        <>
+        <div>
             {!showScene && <button onClick={() => setShowScene(true)} className={"play-button"}>play</button>}
             {showScene && (
-                <Canvas className={"encounter"} style={{width: "300px", height: "300px"}} orthographic camera={{zoom: 75, position: [0, 2, 10], up: [0, 0, 0] }} >
+                <Canvas
+                    className={"encounter canvas"}
+                    style={{width: "300px", height: "300px"}}
+                    orthographic camera={{zoom: 75, position: [0, 2, 10], up: [0, 0, 0] }}
+                    gl={{
+                        outputEncoding: THREE.sRGBEncoding,  // Correct color encoding
+                        toneMapping: THREE.NoToneMapping,    // Disable tone mapping if needed
+                    }}
+
+                >
                     {pkmn != null && <Suspense fallback={""}>
                         <EncounterScene/>
                     </Suspense>}
@@ -191,7 +205,7 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
                     </sprite>
                 </Canvas>
             )}
-        </>
+        </div>
     );
 };
 

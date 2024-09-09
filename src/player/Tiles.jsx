@@ -11,53 +11,49 @@ const Tiles = {
 }
 
 const textureLoader = new THREE.TextureLoader();
+const zones = [];
 
-const zones = []
-
-textureLoader.load('testmap.png', (texture) => {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    canvas.width = texture.image.width;
-    canvas.height = texture.image.height;
-    context.drawImage(texture.image, 0, 0);
+textureLoader.load('testmap2.png', (texture) => {
+    texture.encoding = THREE.sRGBEncoding; // Ensure correct color encoding
+    texture.magFilter = THREE.NearestFilter; // Maintain pixel sharpness
+    texture.flipY = false; // Fix the vertical flip
 
     const sectionSize = 20; // 20x20 grid
+    const numSectionsX = Math.floor(texture.image.width / sectionSize);
+    const numSectionsY = Math.floor(texture.image.height / sectionSize);
 
-    // Calcula o número de seções por linha e coluna
-    const numSectionsX = Math.floor(canvas.width / sectionSize);
-    const numSectionsY = Math.floor(canvas.height / sectionSize);
-
-    // Calcula as coordenadas da zona
-    for(let zone = 0; zone < 32; zone++ ){
+    for (let zone = 0; zone < 32; zone++) {
         const zoneX = zone % numSectionsX;
         const zoneY = Math.floor(zone / numSectionsX);
 
-        // Obtém a seção da zona selecionada
-        const imageData = context.getImageData(zoneX * sectionSize, zoneY * sectionSize, sectionSize, sectionSize);
+        const uvX = zoneX * sectionSize / texture.image.width;
+        const uvY = zoneY * sectionSize / texture.image.height;
+        const uvWidth = sectionSize / texture.image.width;
+        const uvHeight = sectionSize / texture.image.height;
 
-        // Cria uma matriz 2D para armazenar os materiais
-        const materials2DArray = [];
+        const geometry = new THREE.PlaneGeometry(20, 20);
+        const material = new THREE.MeshBasicMaterial({ map: texture });
 
-        // Preenche a matriz 2D com os materiais baseados nos pixels
-        for (let y = 0; y < sectionSize; y++) {
+        // Apply UV coordinates directly on the geometry
+        const uvs = geometry.attributes.uv.array;
+        uvs[0] = uvX; uvs[1] = uvY;
+        uvs[2] = uvX + uvWidth; uvs[3] = uvY;
+        uvs[4] = uvX; uvs[5] = uvY + uvHeight;
+        uvs[6] = uvX + uvWidth; uvs[7] = uvY + uvHeight;
 
-            const row = [];
-            for (let x = sectionSize-1; x >= 0; x--) {
-                const index = (x * sectionSize + y) * 4; // Cada pixel tem 4 valores (RGBA)
-                const r = imageData.data[index];
-                const g = imageData.data[index + 1];
-                const b = imageData.data[index + 2];
-                const color = `rgb(${r}, ${g}, ${b})`;
+        geometry.attributes.uv.needsUpdate = true;
 
-                row.push(
-                    <meshBasicMaterial key={`${zone} ${x}-${y}`} color={color} depthTest={false} />
-                );
-            }
-            materials2DArray.push(row);
-
-        }
-        zones.push(materials2DArray)
+        zones.push(
+            <mesh
+                key={zone}
+                geometry={geometry}
+                material={material}
+                position={[9.5, 9.5, 0]}
+            />
+        );
     }
+
+    console.log('loaded all zones!');
 });
 
 const GetZoneData = (zone) => {

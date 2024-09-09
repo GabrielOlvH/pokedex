@@ -14,7 +14,7 @@ const ZoneSelector = ({closeMap, setPlayerPosition}) => {
         <>
             <div className={"zone-selector"}>
                 <div className={"zone-grid"}>
-                    <img className={"map"} src={"testmap.png"}/>
+                    <img className={"map"} src={"testmap2.png"}/>
                     {zones}
                 </div>
             </div>

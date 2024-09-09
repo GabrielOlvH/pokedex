@@ -30,8 +30,8 @@ function Player({ position }) {
 function Tile({ position, data }) {
     return (
         <mesh position={position}>
-            <planeGeometry args={[1, 1]} />
-            {data[position[0]][position[1]]}
+            <planeGeometry args={[20, 20]}/>
+            {data}
         </mesh>
     );
 }
@@ -96,19 +96,11 @@ function Map({ setEncounter, openZoneSelector, playerPosition, setPlayerPosition
         };
     }, []);
 
-    const [tiles, setTiles] = useState([]);
+    const [tiles, setTiles] = useState(GetZoneData(playerPosition.zone));
     const mapData = GetZoneData(playerPosition.zone);
     useEffect(() => {
         if (mapData === undefined) return;
-        let tmpTiles = []
-        for (let x = 0; x < MAP_SIZE; x++) {
-            for (let y = 0; y < MAP_SIZE; y++) {
-                tmpTiles.push(<Tile key={`Zone ${playerPosition.zone} ${x}-${y}`} position={[x, y, 0]} data={mapData}/>);
-            }
-        }
-
-        setTiles(tmpTiles)
-
+        setTiles(mapData)
     }, [mapData])
 
 
@@ -117,9 +109,14 @@ function Map({ setEncounter, openZoneSelector, playerPosition, setPlayerPosition
         <div className={"game"}>
             <button style={{width: "fit-content", padding: ".25rem .5rem .5rem .5rem", marginBottom: ".5rem"}} onClick={openZoneSelector}>Open Map</button>
             <Canvas
-                style={{width: "300px", height: "300px", background: "red"}}
+                className={"canvas"}
+                style={{width: "300px", height: "300px"}}
                 orthographic
                 camera={{zoom: 15, position: [13.5, 13.5, 8.9], up: [0, 0, 0]}}
+                gl={{
+                    outputEncoding: THREE.sRGBEncoding,  // Correct color encoding
+                    toneMapping: THREE.NoToneMapping,    // Disable tone mapping if needed
+                }}
 
             >
                 <ambientLight/>
