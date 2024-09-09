@@ -19,9 +19,11 @@
     position: absolute;
 
     top: 5%;
+    width: 90dvw;
+    max-width: 600px;
+
     left: 50%;
     transform: translateX(-50%);
-    width: 90dvw;
     height: 95dvh;
     display: flex;
     flex-direction: column;
@@ -35,6 +37,7 @@
     background: gray;
     width: 90dvw;
     height: 70px;
+    max-width: 600px;
     opacity: 0;
     text-align: center;
     border: 4px dimgray solid;

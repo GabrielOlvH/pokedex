@@ -3,7 +3,7 @@
     top: 5dvh;
     left: 50%;
     transform: translateX(-50%);
-
+    max-width: 400px;
     aspect-ratio: 256/512;
     width: 90dvw;
     @media screen and (max-width: 420px) {

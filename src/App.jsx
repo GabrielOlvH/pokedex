@@ -3,8 +3,8 @@ import React, {Suspense, useRef, useState} from "react";
 import Encounter from "./encounter/Encounter";
 import Map from "./player/Player";
 import {Group} from "@tweenjs/tween.js";
-import {PopupProvider} from "./message/PopupContext";
-import Popup from "./message/Popup";
+import {PopupProvider} from "./popups/PopupContext";
+import Popup from "./popups/Popup";
 import ZoneSelector from "./zone_selector/ZoneSelector";
 
 function App() {

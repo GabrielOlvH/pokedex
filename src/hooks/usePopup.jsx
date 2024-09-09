@@ -1,6 +1,6 @@
 // usePopup.jsx
 import { v4 as uuidv4 } from 'uuid';
-import { usePopups } from './PopupContext';
+import { usePopups } from '../popups/PopupContext';
 
 const usePopup = () => {
     const { addPopup } = usePopups();

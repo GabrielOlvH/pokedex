@@ -1,4 +1,4 @@
-import { useData } from "../data/Data";
+import { useData } from "../hooks/useData";
 import { useQuery } from "react-query";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import {useEffect, useRef, useState, useMemo, Suspense} from "react";
@@ -6,7 +6,7 @@ import { TextureLoader, NearestFilter, SpriteMaterial, Sprite, AudioLoader, Audi
 import TWEEN, { Group } from "@tweenjs/tween.js";
 import './Encounter.css';
 import Transform from "../transform/Transform";
-import usePopup from "../message/usePopup";
+import usePopup from "../hooks/usePopup";
 import * as THREE from 'three';
 
 const Encounter = ({ encounter, setEncounter, groupRef }) => {

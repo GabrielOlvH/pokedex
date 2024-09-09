@@ -1,14 +1,6 @@
 import React from "react";
 import * as THREE from 'three';
 
-const Tiles = {
-    Grass: (<meshBasicMaterial color="green" depthTest={false}/>),
-    Sand: (<meshBasicMaterial color="yellow" depthTest={false}/>),
-    Water: (<meshBasicMaterial color="blue" depthTest={false}/>),
-    Stone: (<meshBasicMaterial color="gray" depthTest={false}/>),
-    Snow: (<meshBasicMaterial color="white" depthTest={false}/>),
-    Lava: (<meshBasicMaterial color="red" depthTest={false}/>)
-}
 
 const textureLoader = new THREE.TextureLoader();
 const zones = [];
