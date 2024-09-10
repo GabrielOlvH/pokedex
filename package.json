@@ -13,6 +13,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-query": "^3.39.3",
+    "socket.io-client": "^4.7.5",
     "three.js": "^0.77.1",
     "tween": "^0.9.0",
     "tween.js": "^16.6.0",

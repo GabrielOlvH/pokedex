@@ -1,10 +1,9 @@
 import React, {useRef, useEffect, useState} from 'react';
 import * as THREE from 'three';
 import {Canvas, useFrame, useLoader} from '@react-three/fiber';
-import {useData} from "../data/Data";
-import Tiles from "./Tiles";
-import GetDefaultZoneData from "./Tiles";
+import {useData} from "../hooks/useData";
 import GetZoneData from "./Tiles";
+import {useWebSocket} from "../ws/WebSocketProvider";
 
 const MAP_SIZE = 20; // Define o tamanho do mapa (10x10)
 
@@ -40,32 +39,37 @@ function Map({ setEncounter, openZoneSelector, playerPosition, setPlayerPosition
 
     const data = useData()
 
-
+    const { sendMessage } = useWebSocket()
     let canWalk = true
     const movePlayer = (event) => {
+
         if (!canWalk) return;
         const step = 1;
         switch (event.key) {
             case 'ArrowUp':
                 setPlayerPosition((pos) => ({
+                    ...pos,
                     x: pos.x,
                     y: Math.min(pos.y + step, MAP_SIZE - 1),
                 }));
                 break;
             case 'ArrowDown':
                 setPlayerPosition((pos) => ({
+                    ...pos,
                     x: pos.x,
                     y: Math.max(pos.y - step, 0),
                 }));
                 break;
             case 'ArrowLeft':
                 setPlayerPosition((pos) => ({
+                    ...pos,
                     x: Math.max(pos.x - step, 0),
                     y: pos.y,
                 }));
                 break;
             case 'ArrowRight':
                 setPlayerPosition((pos) => ({
+                    ...pos,
                     x: Math.min(pos.x + step, MAP_SIZE - 1),
                     y: pos.y,
                 }));
@@ -75,13 +79,13 @@ function Map({ setEncounter, openZoneSelector, playerPosition, setPlayerPosition
         }
         canWalk = false
 
-        data.getEncounter(playerPosition).then(r => {
+      /*  data.getEncounter(playerPosition).then(r => {
             if (r === null) {
                 setEncounter(null)
             } else {
                 setEncounter(r.id)
             }
-        })
+        })*/
 
         const timeout = setTimeout(() => {
             canWalk = true
@@ -107,7 +111,12 @@ function Map({ setEncounter, openZoneSelector, playerPosition, setPlayerPosition
 
     return (
         <div className={"game"}>
-            <button style={{width: "fit-content", padding: ".25rem .5rem .5rem .5rem", marginBottom: ".5rem"}} onClick={openZoneSelector}>Open Map</button>
+            <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "1rem"}}>
+                <button style={{width: "fit-content", padding: ".25rem .5rem .5rem .5rem", marginBottom: ".5rem"}}
+                        onClick={openZoneSelector}>Open Map
+                </button>
+                <p style={{color: "white"}}>X: {playerPosition.x} Y: {playerPosition.y}</p>
+            </div>
             <Canvas
                 className={"canvas"}
                 style={{width: "300px", height: "300px"}}

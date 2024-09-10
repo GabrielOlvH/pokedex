@@ -8,15 +8,25 @@ import './Encounter.css';
 import Transform from "../transform/Transform";
 import usePopup from "../hooks/usePopup";
 import * as THREE from 'three';
+import {useWebSocket} from "../ws/WebSocketProvider";
 
-const Encounter = ({ encounter, setEncounter, groupRef }) => {
+const Encounter = ({ playerPosition, groupRef }) => {
+
     const data = useData();
     const [pkmn, setPkmn] = useState(null)
     const triggerPopup = usePopup()
+
+    const [waitingCaptureCheck, setWaitingCaptureCheck] = useState(false)
+
+    const { encounterMessage, captureCheck, sendMessage } = useWebSocket()
+    const state = useWebSocket()
+
     useEffect(() => {
-        if (encounter != null) {
+        console.log(`received ${encounterMessage}`)
+        if (encounterMessage !== null && encounterMessage.toString() !== 'none') {
+            const { pokemon_id } = JSON.parse(encounterMessage)
             console.log("fetching!!")
-            fetch(`https://pokeapi.co/api/v2/pokemon/${encounter}/`).then((response) => {
+            fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon_id}/`).then((response) => {
                 response.json().then((json) => {
                     setPkmn(json)
                     triggerPopup((
@@ -27,11 +37,13 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
                 })
 
             })
-
         } else {
+            console.log("set to null")
+
             setPkmn(null)
         }
-    }, [encounter])
+    }, [encounterMessage])
+
     const [showScene, setShowScene] = useState(true);
 
     const pokeball = Transform([0, -0.75, -1], [0.1, 0.1, 0.1])
@@ -49,38 +61,44 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
 
 
     const throwPokeball = () => {
-        data.getCatchSuccesses(pkmn).then(totalShakes => {
-
-            let capturing = false;
-            group.add(
-                new TWEEN.Tween({y: -0.75})
-                    .to({ y: 1.5 }, 1500)
-                    .easing(TWEEN.Easing.Bounce.Out)
-                    .onUpdate((pos, elapsed) => {
-                        pokeball.setY(pos.y)
-                        if (elapsed > 0.85 && !capturing) {
-                            capturing = true;
-                            group.add(
-                                new TWEEN.Tween({ progress: 0.0 })
-                                    .to({ progress: 1.0 }, 500)
-                                    .easing(TWEEN.Easing.Linear.InOut)
-                                    .onUpdate((obj) => {
-                                        const animation = 2 * (1 - obj.progress);
-                                        const color = 1 + 10 * obj.progress;
-                                        pokemon.setScale([animation, animation, 1])
-                                        pokemon.setPos([0, .5 + 0.75 + obj.progress * 0.5, -1])
-                                        setPokemonColor(color)
-                                    })
-                                    .onComplete(() => shakePokeball(totalShakes))
-                                    .start()
-                            );
-                        }
-                    })
-                    .start()
-            );
-        })
-
+        sendMessage('THROW_POKEBALL', JSON.stringify(playerPosition))
+        setWaitingCaptureCheck(true)
+        console.log("THROW")
     };
+
+    useEffect(() => {
+        if (!waitingCaptureCheck || captureCheck == null) return
+        state.captureCheck = null
+        const {shakes} = JSON.parse(captureCheck)
+        let capturing = false;
+        group.add(
+            new TWEEN.Tween({y: -0.75})
+                .to({ y: 1.5 }, 1500)
+                .easing(TWEEN.Easing.Bounce.Out)
+                .onUpdate((pos, elapsed) => {
+                    pokeball.setY(pos.y)
+                    if (elapsed > 0.85 && !capturing) {
+                        capturing = true;
+                        group.add(
+                            new TWEEN.Tween({ progress: 0.0 })
+                                .to({ progress: 1.0 }, 500)
+                                .easing(TWEEN.Easing.Linear.InOut)
+                                .onUpdate((obj) => {
+                                    const animation = 2 * (1 - obj.progress);
+                                    const color = 1 + 10 * obj.progress;
+                                    pokemon.setScale([animation, animation, 1])
+                                    pokemon.setPos([0, .5 + 0.75 + obj.progress * 0.5, -1])
+                                    setPokemonColor(color)
+                                })
+                                .onComplete(() => shakePokeball(shakes))
+                                .start()
+                        );
+                    }
+                })
+                .start()
+        );
+        setWaitingCaptureCheck(false)
+    }, [captureCheck, waitingCaptureCheck])
 
     const shakePokeball = (totalShakes) => {
         let count = 0;
@@ -127,11 +145,11 @@ const Encounter = ({ encounter, setEncounter, groupRef }) => {
 
     const checkCapture = (totalShakes) => {
         const success = totalShakes === 3;
+        console.log(totalShakes)
         pokemon.reset()
         pokeball.reset()
         setPokemonColor(1)
         if (success) {
-            setEncounter();
             data.setCaptured(pkmn.id);
             triggerPopup((
                 <>
