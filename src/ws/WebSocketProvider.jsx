@@ -1,10 +1,8 @@
 import React, { createContext, useEffect, useReducer } from 'react';
 import { io } from 'socket.io-client';
 
-// Create the context
 const WebSocketContext = createContext();
 
-// Initialize the WebSocket connection
 const socket = io('http://localhost:4000');
 
 const initialState = {
@@ -28,10 +26,12 @@ export const WebSocketProvider = ({ children }) => {
 
     useEffect(() => {
         socket.on('UPDATE_ENCOUNTER', (data) => {
+            console.log(`Received UPDATE_ENCOUNTER: ${data}`)
             dispatch({ type: 'UPDATE_ENCOUNTER', payload: data });
         });
 
         socket.on('CAPTURE_CHECK', (data) => {
+            console.log(`Received CAPTURE_CHECK: ${data}`)
             dispatch({ type: 'CAPTURE_CHECK', payload: data });
         });
 
@@ -56,5 +56,4 @@ export const WebSocketProvider = ({ children }) => {
     );
 };
 
-// Custom hook to use WebSocket context
 export const useWebSocket = () => React.useContext(WebSocketContext);

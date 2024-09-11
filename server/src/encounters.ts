@@ -1,13 +1,6 @@
 import {Server, Socket} from "socket.io";
-import {PlayerPosition} from "./player-data";
+import {Encounter, PlayerPosition} from "./types";
 
-type Encounter = {
-    pokemon_id: number
-    x: number,
-    y: number,
-    form: string | null,
-    captured: string[]
-}
 
 let encounters: Encounter[][]=[]
 
@@ -50,10 +43,8 @@ const startEncounterTask = () => {
 const checkEncounter = (pos: PlayerPosition, socket: Socket) => {
 
     for (let encounter of encounters[pos.zone]) {
-        console.log(`check ${JSON.stringify(pos)} ${JSON.stringify(encounter)}`)
         if (encounter.x === pos.x && encounter.y === pos.y ) {
             socket.emit('UPDATE_ENCOUNTER', JSON.stringify(encounter))
-            console.log("FOUND!")
             return
         }
     }

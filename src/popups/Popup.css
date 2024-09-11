@@ -20,7 +20,7 @@
 
     top: 5%;
     width: 90dvw;
-    max-width: 600px;
+    max-width: 500px;
 
     left: 50%;
     transform: translateX(-50%);
@@ -34,10 +34,11 @@
 
 
 .message-background {
+    border-radius: 10px;
     background: gray;
     width: 90dvw;
     height: 70px;
-    max-width: 600px;
+    max-width: 500px;
     opacity: 0;
     text-align: center;
     border: 4px dimgray solid;

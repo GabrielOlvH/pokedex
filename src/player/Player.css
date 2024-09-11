@@ -1,0 +1,11 @@
+.move-buttons {
+    margin-top: .5rem;
+    flex-direction: column;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.move-buttons button {
+    width: 32px;
+}

@@ -1,5 +1,4 @@
 import { useData } from "../hooks/useData";
-import { useQuery } from "react-query";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import {useEffect, useRef, useState, useMemo, Suspense} from "react";
 import { TextureLoader, NearestFilter, SpriteMaterial, Sprite, AudioLoader, AudioListener, Audio } from "three";
@@ -22,10 +21,8 @@ const Encounter = ({ playerPosition, groupRef }) => {
     const state = useWebSocket()
 
     useEffect(() => {
-        console.log(`received ${encounterMessage}`)
         if (encounterMessage !== null && encounterMessage.toString() !== 'none') {
             const { pokemon_id } = JSON.parse(encounterMessage)
-            console.log("fetching!!")
             fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon_id}/`).then((response) => {
                 response.json().then((json) => {
                     setPkmn(json)
@@ -38,8 +35,6 @@ const Encounter = ({ playerPosition, groupRef }) => {
 
             })
         } else {
-            console.log("set to null")
-
             setPkmn(null)
         }
     }, [encounterMessage])
@@ -69,7 +64,7 @@ const Encounter = ({ playerPosition, groupRef }) => {
     useEffect(() => {
         if (!waitingCaptureCheck || captureCheck == null) return
         state.captureCheck = null
-        const {shakes} = JSON.parse(captureCheck)
+        const { shakes } = JSON.parse(captureCheck)
         let capturing = false;
         group.add(
             new TWEEN.Tween({y: -0.75})

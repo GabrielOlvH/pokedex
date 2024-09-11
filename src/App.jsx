@@ -7,37 +7,63 @@ import {PopupProvider} from "./popups/PopupContext";
 import Popup from "./popups/Popup";
 import ZoneSelector from "./zone_selector/ZoneSelector";
 import {useWebSocket} from "./ws/WebSocketProvider";
+import {useAuth} from "./auth/AuthContext";
+import Login from "./auth/Login";
+import Signup from "./auth/Signup";
 
 function App() {
 
-    const [showZoneSelector, setShowZoneSelector] = useState(false)
-    const groupRef = useRef(new Group());
+    const {user, authenticated, logout} = useAuth();
 
+    if (!authenticated) {
+        return (
+            <div className="App">
+                <Login/>
+                <Signup/>
+            </div>);
+    }
+
+
+    const [showZoneSelector, setShowZoneSelector] = useState(false)
     const [playerPosition, setPlayerPosition] = useState({x: 1, y: 1, zone: 1});
 
-    const { sendMessage } = useWebSocket()
+    const groupRef = useRef(new Group());
+
+    const {sendMessage} = useWebSocket()
 
     useEffect(() => {
         sendMessage('MOVE_PLAYER', JSON.stringify(playerPosition))
     }, [playerPosition])
     return (
-        <PopupProvider>
-            <div className="App">
-                {/**/}
-
-                {(<Map groupRef={groupRef}
-                                            openZoneSelector={() => setShowZoneSelector(true)}
-                                            playerPosition={playerPosition}
-                                            setPlayerPosition={setPlayerPosition}
-                />)}
-                {
-                    <Suspense fallback={"aaa"}>
-                        <Encounter groupRef={groupRef} playerPosition={playerPosition}/>
-                    </Suspense>}
-                {showZoneSelector && <ZoneSelector closeMap={() => setShowZoneSelector(false)} setPlayerPosition={setPlayerPosition}/>}
+        <div className="App">
+            <div className={"toolbar"}>
+                <div style={{gap: "1rem", display: "flex"}}>
+                    <button className={"game-button"}
+                            onClick={() => setShowZoneSelector(true)}>Open Map
+                    </button>
+                    <button className={"game-button"}
+                            onClick={() => logout()}>Logout
+                    </button>
+                </div>
+                <p style={{color: "white"}}>{user?.username}</p>
+                <p style={{color: "white"}}>X: {playerPosition.x} Y: {playerPosition.y}</p>
             </div>
-            <Popup/>
-        </PopupProvider>
+            <Map
+                openZoneSelector={() => setShowZoneSelector(true)}
+                playerPosition={playerPosition}
+                setPlayerPosition={setPlayerPosition}
+            />
+
+            <Suspense fallback={"aaa"}>
+                <Encounter groupRef={groupRef} playerPosition={playerPosition}/>
+            </Suspense>
+            {showZoneSelector &&
+                <ZoneSelector
+                    closeMap={() => setShowZoneSelector(false)}
+                    setPlayerPosition={setPlayerPosition}
+                />
+            }
+        </div>
     );
 }
 

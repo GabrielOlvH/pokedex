@@ -19,8 +19,8 @@ const ZoneSelector = ({closeMap, setPlayerPosition}) => {
                 </div>
             </div>
             <div className={"zone-grid-buttons"}>
-                <button className={"zone-menu-button"} onClick={closeMap}>CLOSE</button>
-                <button className={"zone-menu-button"} onClick={() => {
+                <button className={"game-button zone-menu-button"} onClick={closeMap}>CLOSE</button>
+                <button className={"game-button zone-menu-button"} onClick={() => {
                     setPlayerPosition((prev) => ({
                         ...prev,
                         zone: selected

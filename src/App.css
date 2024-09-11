@@ -33,13 +33,19 @@
   background-size: cover;
 }
 
-.game button {
+.game-button {
   border: none;
-  width: 32px;
-  height: 32px;
-  padding: 0;
+  padding: .5rem;
   background: white;
   color: black;
   border-radius: 5px;
   box-shadow: 4px 4px 2px lightgray inset, -4px -4px 2px gray inset;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  width: 300px;
 }

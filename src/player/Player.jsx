@@ -4,6 +4,7 @@ import {Canvas, useFrame, useLoader} from '@react-three/fiber';
 import {useData} from "../hooks/useData";
 import GetZoneData from "./Tiles";
 import {useWebSocket} from "../ws/WebSocketProvider";
+import './Player.css'
 
 const MAP_SIZE = 20; // Define o tamanho do mapa (10x10)
 
@@ -35,7 +36,7 @@ function Tile({ position, data }) {
     );
 }
 
-function Map({ setEncounter, openZoneSelector, playerPosition, setPlayerPosition }) {
+function Map({ openZoneSelector, playerPosition, setPlayerPosition }) {
 
     const data = useData()
 
@@ -111,12 +112,7 @@ function Map({ setEncounter, openZoneSelector, playerPosition, setPlayerPosition
 
     return (
         <div className={"game"}>
-            <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "1rem"}}>
-                <button style={{width: "fit-content", padding: ".25rem .5rem .5rem .5rem", marginBottom: ".5rem"}}
-                        onClick={openZoneSelector}>Open Map
-                </button>
-                <p style={{color: "white"}}>X: {playerPosition.x} Y: {playerPosition.y}</p>
-            </div>
+
             <Canvas
                 className={"canvas"}
                 style={{width: "300px", height: "300px"}}
@@ -136,12 +132,12 @@ function Map({ setEncounter, openZoneSelector, playerPosition, setPlayerPosition
                 }}/>
 
             </Canvas>
-            <div style={{textAlign: "center", marginTop: ".5rem"}}>
-                <button onClick={() => movePlayer({key: 'ArrowUp'})}>↑</button>
+            <div className={"move-buttons"}>
+                <button className={"game-button"} onClick={() => movePlayer({key: 'ArrowUp'})}>↑</button>
                 <div style={{marginTop: ".5rem", display: "flex", justifyContent: "center", gap: ".5rem"}}>
-                    <button onClick={() => movePlayer({key: 'ArrowLeft'})}>←</button>
-                    <button onClick={() => movePlayer({key: 'ArrowDown'})}>↓</button>
-                    <button onClick={() => movePlayer({key: 'ArrowRight'})}>→</button>
+                    <button className={"game-button"} onClick={() => movePlayer({key: 'ArrowLeft'})}>←</button>
+                    <button className={"game-button"} onClick={() => movePlayer({key: 'ArrowDown'})}>↓</button>
+                    <button className={"game-button"} onClick={() => movePlayer({key: 'ArrowRight'})}>→</button>
                 </div>
             </div>
         </div>

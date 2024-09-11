@@ -1,0 +1,23 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form input, .form button {
+    font-size: 1.5rem;
+    border-radius: 10px;
+    padding: 0.25rem;
+}
+
+form.input {
+    transition: background-color 1s;
+}
+
+input.error {
+    background-color: lightcoral !important;
+}
+
+input:focus {
+    background-color: lightblue ;
+}
