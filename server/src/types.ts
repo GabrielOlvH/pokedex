@@ -15,8 +15,8 @@ export type Encounter = {
 
 
 export interface PlayerData {
-    uuid: string
-    pokemon: Map<number, PokemonData>
+    id: number
+    pokemon: Map<number, PokemonData[]>
 }
 
 export type PlayerPosition = {
@@ -25,8 +25,3 @@ export type PlayerPosition = {
     zone: number
 }
 
-export interface User {
-    id: number;
-    username: string;
-    password: string;
-}

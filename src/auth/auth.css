@@ -10,6 +10,9 @@
     padding: 0.25rem;
 }
 
+.form > * {
+    border:none;
+}
 form.input {
     transition: background-color 1s;
 }
@@ -20,4 +23,11 @@ input.error {
 
 input:focus {
     background-color: lightblue ;
+}
+
+form {
+    background: cadetblue;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: -4px -4px 2px gray inset, 4px 4px 2px white inset;
 }

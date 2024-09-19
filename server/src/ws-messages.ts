@@ -10,6 +10,7 @@ export const handleMessages = (socket: Socket) => {
     })
 
     socket.on('THROW_POKEBALL', (payload) => {
+
         const pos: PlayerPosition = JSON.parse(payload)
         throwPokeball(pos, socket)
     })

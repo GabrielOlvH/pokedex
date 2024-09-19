@@ -1,14 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import usePopup from "../hooks/usePopup";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [authenticated, setAuthenticated] = useState(false);
+    const triggerPopup = usePopup()
 
-    // Check if the user is authenticated when the component mounts
-    useEffect(() => {
+    const checkLogin = () =>  {
         axios.get('http://localhost:4001/check-auth', { withCredentials: true })
             .then(response => {
                 if (response.data.authenticated) {
@@ -18,12 +19,17 @@ export const AuthProvider = ({ children }) => {
                     setAuthenticated(false);
                 }
             });
-    }, []);
+    }
+
+    useEffect(checkLogin, []);
 
     const login = async (username, password) => {
         try {
-            await axios.post('http://localhost:4001/login', { username, password }, { withCredentials: true });
-            setAuthenticated(true);
+            axios.post('http://localhost:4001/login', { username, password }, { withCredentials: true })
+                .then(() => {
+                    checkLogin()
+                })
+                .catch(() => triggerPopup(<h2>Incorrect username or password</h2>, 2000))
         } catch (error) {
             console.error('Login failed', error);
         }
@@ -31,7 +37,9 @@ export const AuthProvider = ({ children }) => {
 
     const signup = async (username, password) => {
         try {
-            await axios.post('http://localhost:4001/signup', { username, password }, { withCredentials: true });
+            axios.post('http://localhost:4001/signup', { username, password }, { withCredentials: true })
+                .then(() => triggerPopup(<><h2>Account created!</h2><p>You can now log into your new account</p></>, 2000))
+                .catch((r) => triggerPopup(<h2>{r.response.data.message}</h2>, 2000))
         } catch (error) {
             console.error('Signup.jsx failed', error);
         }

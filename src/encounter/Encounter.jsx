@@ -23,7 +23,8 @@ const Encounter = ({ playerPosition, groupRef }) => {
     useEffect(() => {
         if (encounterMessage !== null && encounterMessage.toString() !== 'none') {
             const { pokemon_id } = JSON.parse(encounterMessage)
-            fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon_id}/`).then((response) => {
+            fetch(`http://localhost:4001/pokemon/${pokemon_id}/`).then((response) => {
+
                 response.json().then((json) => {
                     setPkmn(json)
                     triggerPopup((
@@ -62,9 +63,9 @@ const Encounter = ({ playerPosition, groupRef }) => {
     };
 
     useEffect(() => {
-        if (!waitingCaptureCheck || captureCheck == null) return
+        if (!waitingCaptureCheck || state.captureCheck == null) return
+        const { shakes } = JSON.parse(state.captureCheck)
         state.captureCheck = null
-        const { shakes } = JSON.parse(captureCheck)
         let capturing = false;
         group.add(
             new TWEEN.Tween({y: -0.75})
@@ -93,7 +94,7 @@ const Encounter = ({ playerPosition, groupRef }) => {
                 .start()
         );
         setWaitingCaptureCheck(false)
-    }, [captureCheck, waitingCaptureCheck])
+    }, [state.captureCheck, waitingCaptureCheck])
 
     const shakePokeball = (totalShakes) => {
         let count = 0;
@@ -146,6 +147,7 @@ const Encounter = ({ playerPosition, groupRef }) => {
         setPokemonColor(1)
         if (success) {
             data.setCaptured(pkmn.id);
+            setPkmn(null)
             triggerPopup((
                 <>
                     <h2>Gotcha!</h2>
@@ -161,7 +163,7 @@ const Encounter = ({ playerPosition, groupRef }) => {
             const audioListener = new AudioListener();
             const sound = new Audio(audioListener);
             const audioLoader = new AudioLoader();
-            audioLoader.load(pkmn.cries.latest, (buffer) => {
+            audioLoader.load(pkmn.cries[0], (buffer) => {
                 sound.setBuffer(buffer);
                 sound.setLoop(false);
                 sound.setVolume(0.05);
@@ -172,7 +174,7 @@ const Encounter = ({ playerPosition, groupRef }) => {
     }, [pkmn]);
 
     const EncounterScene = () => {
-        const pokemonTexture = useLoader(TextureLoader, pkmn.sprites.front_default);
+        const pokemonTexture = useLoader(TextureLoader, `data:image/png;base64,${pkmn.sprites[0]["data"]}`);
         pokemonTexture.minFilter = NearestFilter;
         pokemonTexture.magFilter = NearestFilter;
 

@@ -2,21 +2,19 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import bcrypt from 'bcryptjs';
-import {User} from "./types";
+import User from "./models/user.model";
 
 // Mock users for simplicity
-export const users: User[] = [
-    { id: 1, username: 'user', password: '$2a$10$XNML3xt1dNvAkcswcet1n.IF5VWGqYdAbowYMdLYI07VajzNbPq46' } // hashed password 'password123'
-];
 
 // Passport local strategy configuration
-passport.use(new LocalStrategy((username, password, done) => {
-    const user = users.find(user => user.username === username);
+passport.use(new LocalStrategy(async (username, password, done) => {
+    const user = await User.findOne({ username });
 
+    console.log(username)
+    console.log(password)
     if (!user) {
         return done(null, false, { message: 'Incorrect username.' });
     }
-    bcrypt.hash("password123", 10).then(console.log)
     // Compare hashed password
     bcrypt.compare(password, user.password, (err, isMatch) => {
         if (err) throw err;
@@ -35,8 +33,9 @@ passport.serializeUser((user: any, done) => {
 
 // Deserialize user from session
 passport.deserializeUser((id: number, done) => {
-    const user = users.find(user => user.id === id);
-    done(null, user || false);
+    User.findOne({ id })
+        .then((user) => done(null, user || false));
+
 });
 
 export default passport;

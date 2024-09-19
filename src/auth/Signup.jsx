@@ -15,7 +15,6 @@ const Signup = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-
         if (username.length === 0 || password.length === 0) {
             triggerPopup(<h2>Insert an username and password!</h2>, 2000)
             return
@@ -25,7 +24,6 @@ const Signup = () => {
             triggerPopup(<h2>Passwords don't match!</h2>, 2000)
             return;
         }
-
 
         await signup(username, password);
     };
